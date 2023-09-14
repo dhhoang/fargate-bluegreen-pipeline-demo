@@ -1,21 +1,28 @@
 #!/usr/bin/env node
 import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { BlueGreenFargateStack } from '../lib/fargate-stack';
+import { FargateStack } from '../lib/fargate-stack';
+import { DeploymentPipelineStack } from '../lib/pipeline-stack';
 
+const servicePrefix = 'Centauri';
+const ecrRepoUri = '694500861348.dkr.ecr.ap-southeast-2.amazonaws.com/apptest';
 const app = new cdk.App();
-new BlueGreenFargateStack(app, 'FargateBluegreenPipelineDemoStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
+const testStack = new FargateStack(app, `${servicePrefix}FargateStack`, {
+  servicePrefix: servicePrefix,
+  env: {
+    account: '694500861348',
+    region: 'ap-southeast-1'
+  }
+});
 
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
-
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
-
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
+const pipelineStack = new DeploymentPipelineStack(app, `${servicePrefix}PipelineStack`, {
+  crossRegionReferences: true,
+  servicePrefix: servicePrefix,
+  codeStarConnectionArn: 'arn:aws:codestar-connections:ap-southeast-2:694500861348:connection/4740d9d7-fbf3-4758-bb87-532a50ff8011',
+  gitBranch: 'cdk-test',
+  ecrRepoUri: ecrRepoUri,
+  env: {
+    account: '694500861348',
+    region: 'ap-southeast-2'
+  }
 });
