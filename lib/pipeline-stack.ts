@@ -55,6 +55,7 @@ export class DeploymentPipelineStack extends cdk.Stack {
       },
     });
 
+    codeBuildProject.role?.addManagedPolicy(iam.ManagedPolicy.fromAwsManagedPolicyName('AWSCodeBuildDeveloperAccess'));
     codeBuildProject.role?.addManagedPolicy(new iam.ManagedPolicy(this, 'ContainerBuildExtraPermissions', {
       statements: [
         new iam.PolicyStatement({
@@ -74,7 +75,7 @@ export class DeploymentPipelineStack extends cdk.Stack {
     }));
 
     // Code Pipeline - CloudWatch trigger event is created by CDK
-    const pipeline = new codePipeline.Pipeline(this, 'ecsBlueGreen', {
+    const pipeline = new codePipeline.Pipeline(this, 'BuildPipeline', {
       artifactBucket: buildArtifactBucket,
       stages: [
         {
@@ -132,7 +133,14 @@ export class DeploymentPipelineStack extends cdk.Stack {
             'codedeploy:RegisterApplicationRevision',
             's3:Get*',
             's3:List*',
-            's3:PutObject'
+            's3:PutObject',
+            'ecs:DescribeServices',
+            'ecs:DescribeTaskDefinition',
+            'ecs:DescribeTasks',
+            'ecs:ListTasks',
+            'ecs:RegisterTaskDefinition',
+            'ecs:TagResource',
+            'ecs:UpdateService'
           ],
           resources: ['*']
         })
